@@ -1,0 +1,22 @@
+sudo: required
+services:
+  - docker
+before_install:
+  - docker build -t annestani react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true annestani/react-test npm test
+  
+after_success: 
+  - docker build -t annestani/multi-client ./client
+  - docker build -t annestani/multi-nginx ./nginx
+  - docker build -t annestani/multi-server ./server
+  - docker build -t annestani/multi-worker ./worker
+
+  # login
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # takes the images and push to the docker hub
+  - docker push annestani/multi-client
+  - docker push annestani/multi-nginx
+  - docker push annestani/multi-server
+  - docker push annestani/multi-worker
